@@ -4,6 +4,7 @@ import { useState } from "react";
 import AppButton from "@/components/AppButton";
 import MobileShell from "@/components/MobileShell";
 import { saveCouple } from "@/lib/storage";
+import { supabase } from "@/lib/supabase";
 
 const objetivos = [
   "❤️ Romance",
@@ -19,22 +20,62 @@ export default function CriarPage() {
   const [parceiro, setParceiro] = useState("");
   const [objetivo, setObjetivo] = useState("");
   const [codigo, setCodigo] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function gerarCodigo() {
-  const numero = Math.floor(10000 + Math.random() * 90000);
-  const novoCodigo = `SDR-${numero}`;
+  async function gerarCodigo() {
+    if (loading) return;
 
-  saveCouple({
-    apelido,
-    parceiro,
-    objetivo,
-    codigo: novoCodigo,
-    createdAt: new Date().toISOString(),
-  });
+    setLoading(true);
 
-  setCodigo(novoCodigo);
-  setStep(4);
-}
+    const numero = Math.floor(10000 + Math.random() * 90000);
+    const novoCodigo = `SDR-${numero}`;
+
+    const { data: couple, error: coupleError } = await supabase
+      .from("couples")
+      .insert({ code: novoCodigo })
+      .select()
+      .single();
+
+    if (coupleError) {
+      alert("Erro ao criar espaço do casal.");
+      console.error(coupleError);
+      setLoading(false);
+      return;
+    }
+
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .insert({
+        couple_id: couple.id,
+        nickname: apelido,
+        role: "creator",
+        objective: objetivo,
+      })
+      .select()
+      .single();
+
+    if (userError) {
+      alert("Erro ao salvar usuário.");
+      console.error(userError);
+      setLoading(false);
+      return;
+    }
+
+    saveCouple({
+      apelido,
+      parceiro,
+      objetivo,
+      codigo: novoCodigo,
+      createdAt: new Date().toISOString(),
+    });
+
+    localStorage.setItem("saiadarotina_couple_id", couple.id);
+    localStorage.setItem("saiadarotina_user_id", user.id);
+
+    setCodigo(novoCodigo);
+    setStep(4);
+    setLoading(false);
+  }
 
   return (
     <MobileShell>
@@ -111,7 +152,9 @@ export default function CriarPage() {
         {step === 3 && (
           <section className="flex flex-1 flex-col justify-between">
             <div>
-              <h1 className="text-4xl font-bold">O que vocês querem viver mais?</h1>
+              <h1 className="text-4xl font-bold">
+                O que vocês querem viver mais?
+              </h1>
               <p className="mt-3 text-white/65">
                 Escolha o principal objetivo do casal neste momento.
               </p>
@@ -136,9 +179,10 @@ export default function CriarPage() {
             <div className="space-y-3">
               <button
                 onClick={() => objetivo && gerarCodigo()}
-                className="w-full rounded-2xl bg-pink-500 px-5 py-4 text-center font-semibold text-white shadow-lg shadow-pink-900/30 active:scale-[0.98]"
+                disabled={loading}
+                className="w-full rounded-2xl bg-pink-500 px-5 py-4 text-center font-semibold text-white shadow-lg shadow-pink-900/30 disabled:opacity-60 active:scale-[0.98]"
               >
-                Criar espaço do casal
+                {loading ? "Criando..." : "Criar espaço do casal"}
               </button>
 
               <button
@@ -160,7 +204,8 @@ export default function CriarPage() {
 
               <h1 className="text-4xl font-bold">Espaço criado</h1>
               <p className="mt-3 text-white/65">
-                Compartilhe este código com {parceiro || "seu par"} para começar.
+                Compartilhe este código com {parceiro || "seu par"} para
+                começar.
               </p>
 
               <div className="mt-10 rounded-3xl border border-pink-400/20 bg-pink-500/10 p-6">
