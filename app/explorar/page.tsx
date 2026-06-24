@@ -1,19 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MobileShell from "@/components/MobileShell";
 import BottomNav from "@/components/BottomNav";
-import { ideas } from "@/lib/ideas";
+import { ideas, Idea } from "@/lib/ideas";
 
 type ResponseType = "topo" | "talvez" | "nao";
 
 export default function ExplorarPage() {
+  const [allIdeas, setAllIdeas] = useState<Idea[]>([]);
   const [index, setIndex] = useState(0);
   const [finished, setFinished] = useState(false);
 
-  const currentIdea = ideas[index];
+  useEffect(() => {
+    const customIdeas = JSON.parse(
+      localStorage.getItem("saiadarotina_custom_ideas") || "[]"
+    );
+
+    setAllIdeas([...ideas, ...customIdeas]);
+  }, []);
+
+  const currentIdea = allIdeas[index];
 
   function responder(resposta: ResponseType) {
+    if (!currentIdea) return;
+
     const respostasSalvas = JSON.parse(
       localStorage.getItem("saiadarotina_responses") || "{}"
     );
@@ -25,11 +36,24 @@ export default function ExplorarPage() {
       JSON.stringify(respostasSalvas)
     );
 
-    if (index + 1 < ideas.length) {
+    if (index + 1 < allIdeas.length) {
       setIndex(index + 1);
     } else {
       setFinished(true);
     }
+  }
+
+  if (!currentIdea && !finished) {
+    return (
+      <MobileShell>
+        <div className="pb-24">
+          <p className="text-sm text-pink-300">Explorar</p>
+          <h1 className="mt-2 text-3xl font-bold">Ideias para vocês</h1>
+          <p className="mt-2 text-white/60">Carregando ideias...</p>
+        </div>
+        <BottomNav />
+      </MobileShell>
+    );
   }
 
   return (
@@ -41,11 +65,11 @@ export default function ExplorarPage() {
           Responda com sinceridade. O app mostra apenas o que combinar com os dois.
         </p>
 
-        {!finished ? (
+        {!finished && currentIdea ? (
           <div className="mt-8 rounded-3xl border border-pink-400/20 bg-pink-500/10 p-5">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm text-pink-300">
-                {index + 1} de {ideas.length}
+                {index + 1} de {allIdeas.length}
               </p>
               <p className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/70">
                 {currentIdea.category}
@@ -58,19 +82,21 @@ export default function ExplorarPage() {
               {currentIdea.description}
             </p>
 
-            <div className="mt-6">
-              <p className="text-sm text-white/45">Pode combinar com:</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {currentIdea.products.map((product) => (
-                  <span
-                    key={product}
-                    className="rounded-full bg-white/10 px-3 py-2 text-sm text-white/75"
-                  >
-                    {product}
-                  </span>
-                ))}
+            {currentIdea.products.length > 0 && (
+              <div className="mt-6">
+                <p className="text-sm text-white/45">Pode combinar com:</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {currentIdea.products.map((product) => (
+                    <span
+                      key={product}
+                      className="rounded-full bg-white/10 px-3 py-2 text-sm text-white/75"
+                    >
+                      {product}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="mt-8 grid grid-cols-3 gap-2">
               <button

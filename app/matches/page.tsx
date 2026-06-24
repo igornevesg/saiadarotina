@@ -13,7 +13,13 @@ export default function MatchesPage() {
       localStorage.getItem("saiadarotina_responses") || "{}"
     );
 
-    const ideiasComMatch = ideas.filter(
+    const customIdeas = JSON.parse(
+      localStorage.getItem("saiadarotina_custom_ideas") || "[]"
+    );
+
+    const todasIdeias = [...ideas, ...customIdeas];
+
+    const ideiasComMatch = todasIdeias.filter(
       (idea) => respostas[idea.id] === "topo" || respostas[idea.id] === "talvez"
     );
 
@@ -47,22 +53,24 @@ export default function MatchesPage() {
 
                 <p className="mt-3 text-white/65">{match.description}</p>
 
-                <div className="mt-5">
-                  <p className="text-sm text-white/45">
-                    Itens que podem combinar:
-                  </p>
+                {match.products.length > 0 && (
+                  <div className="mt-5">
+                    <p className="text-sm text-white/45">
+                      Itens que podem combinar:
+                    </p>
 
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {match.products.map((product) => (
-                      <span
-                        key={product}
-                        className="rounded-full bg-white/10 px-3 py-2 text-sm text-white/75"
-                      >
-                        {product}
-                      </span>
-                    ))}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {match.products.map((product) => (
+                        <span
+                          key={product}
+                          className="rounded-full bg-white/10 px-3 py-2 text-sm text-white/75"
+                        >
+                          {product}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <a
                   href="https://dablogueirinha.com.br/"
