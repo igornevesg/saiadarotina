@@ -3,6 +3,7 @@
 import { useState } from "react";
 import AppButton from "@/components/AppButton";
 import MobileShell from "@/components/MobileShell";
+import { saveCouple } from "@/lib/storage";
 
 const objetivos = [
   "❤️ Romance",
@@ -20,10 +21,20 @@ export default function CriarPage() {
   const [codigo, setCodigo] = useState("");
 
   function gerarCodigo() {
-    const numero = Math.floor(10000 + Math.random() * 90000);
-    setCodigo(`SDR-${numero}`);
-    setStep(4);
-  }
+  const numero = Math.floor(10000 + Math.random() * 90000);
+  const novoCodigo = `SDR-${numero}`;
+
+  saveCouple({
+    apelido,
+    parceiro,
+    objetivo,
+    codigo: novoCodigo,
+    createdAt: new Date().toISOString(),
+  });
+
+  setCodigo(novoCodigo);
+  setStep(4);
+}
 
   return (
     <MobileShell>
