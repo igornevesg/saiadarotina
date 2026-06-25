@@ -136,6 +136,17 @@ export default function ExplorarPage() {
       const productsRes = await fetch(`/api/recommendations?ideaId=${idea.id}`);
       const productsJson = await productsRes.json();
 
+      await fetch("/api/relationship/match", {
+  method: "POST",
+  body: JSON.stringify({
+    coupleId,
+    userId,
+    ideaId: idea.id,
+    title: idea.title,
+    matchType: fullMatch ? "full" : "partial",
+  }),
+});
+
       setMatchModal({
         ideaId: idea.id,
         title: idea.title,
