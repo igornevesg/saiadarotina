@@ -1,6 +1,6 @@
 export const DomainEvents = {
-  ExperienceCompleted: "ExperienceCompleted",
   MatchCreated: "MatchCreated",
+  ExperienceCompleted: "ExperienceCompleted",
   MemoryCreated: "MemoryCreated",
   ProductClicked: "ProductClicked",
   ProductPurchased: "ProductPurchased",
@@ -10,3 +10,11 @@ export const DomainEvents = {
 
 export type DomainEventType =
   (typeof DomainEvents)[keyof typeof DomainEvents];
+
+export type MatchCreatedPayload = {
+  coupleId: string;
+  userId?: string | null;
+  ideaId: string;
+  title: string;
+  matchType: "full" | "partial";
+};

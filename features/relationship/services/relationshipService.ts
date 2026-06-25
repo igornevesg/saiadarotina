@@ -1,27 +1,16 @@
-import { createTimelineEvent } from "../repositories/relationshipRepository";
+import { eventDispatcher } from "@/infrastructure/eventBus/eventDispatcher";
+import {
+  DomainEvents,
+  type MatchCreatedPayload,
+} from "@/features/platform/events/domainEvents";
+import { registerRelationshipListeners } from "../events/registerRelationshipListeners";
 
-type RegisterMatchInput = {
-  coupleId: string;
-  userId?: string | null;
-  ideaId: string;
-  title: string;
-  matchType: "full" | "partial";
-};
+export async function registerMatchInTimeline(input: MatchCreatedPayload) {
+  registerRelationshipListeners();
 
-export async function registerMatchInTimeline(input: RegisterMatchInput) {
-  return createTimelineEvent({
-    coupleId: input.coupleId,
-    userId: input.userId || null,
-    ideaId: input.ideaId,
-    eventType: "match_created",
-    title: input.title,
-    description:
-      input.matchType === "full"
-        ? "Vocês dois demonstraram interesse nessa experiência."
-        : "Essa experiência pode fazer sentido para vocês.",
-    visibility: "couple",
-    metadata: {
-      matchType: input.matchType,
-    },
+  await eventDispatcher.dispatch(DomainEvents.MatchCreated, input, {
+    source: "relationship.match",
   });
+
+  return { ok: true };
 }
