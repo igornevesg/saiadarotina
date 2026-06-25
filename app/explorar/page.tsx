@@ -37,6 +37,7 @@ export default function ExplorarPage() {
       const { data, error } = await supabase
         .from("ideas")
         .select("*")
+        .eq("active", true)
         .order("created_at", { ascending: true });
 
       if (error) {
