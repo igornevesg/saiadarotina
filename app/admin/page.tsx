@@ -50,6 +50,26 @@ export default function AdminPage() {
     carregarDashboard();
   }, []);
 
+  async function sincronizarShopify() {
+  const confirmar = confirm("Deseja sincronizar os produtos da Shopify agora?");
+  if (!confirmar) return;
+
+  const res = await fetch("/api/admin/shopify/sync", {
+    method: "POST",
+  });
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    alert(json.error || "Erro ao sincronizar Shopify.");
+    return;
+  }
+
+  alert(
+    `Sincronização concluída!\nImportados: ${json.imported}\nAtualizados: ${json.updated}`
+  );
+}
+
   return (
     <main className="min-h-screen bg-[#160813] px-5 py-10 text-white">
       <div className="mx-auto max-w-6xl">
@@ -124,6 +144,13 @@ export default function AdminPage() {
                   >
                     Motor de recomendações
                   </a>
+
+                  <button
+  onClick={sincronizarShopify}
+  className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-center font-semibold"
+>
+  Sincronizar Shopify
+</button>
                 </div>
               </section>
             </div>

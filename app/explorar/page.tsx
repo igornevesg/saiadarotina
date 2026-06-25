@@ -5,6 +5,7 @@ import Link from "next/link";
 import MobileShell from "@/components/MobileShell";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/lib/supabase";
+import { trackEvent } from "@/lib/analytics";
 
 type Idea = {
   id: string;
@@ -66,91 +67,106 @@ export default function ExplorarPage() {
     carregarIdeias();
   }, []);
 
-  async function verificarMatchInstantaneo(
-  idea: Idea,
-  respostaAtual: ResponseType
-) {
-  if (respostaAtual === "nao") return false;
-
-  const coupleId = localStorage.getItem("saiadarotina_couple_id");
-  const userId = localStorage.getItem("saiadarotina_user_id");
-
-  if (!coupleId || !userId) return false;
-
-  const { data: users } = await supabase
-    .from("users")
-    .select("id")
-    .eq("couple_id", coupleId);
-
-  if (!users || users.length < 2) return false;
-
-  const outrosUsuarios = users.filter((user) => user.id !== userId);
-
-  const { data: partnerResponses } = await supabase
-    .from("responses")
-    .select("*")
-    .eq("idea_id", idea.id)
-    .in(
-      "user_id",
-      outrosUsuarios.map((user) => user.id)
-    )
-    .order("created_at", { ascending: false });
-
-  if (!partnerResponses || partnerResponses.length === 0) return false;
-
-  const respostaParceiro = partnerResponses.find(
-    (item) => item.response === "topo" || item.response === "talvez"
-  );
-
-  if (!respostaParceiro) return false;
-
-  const respostaDoParceiro = respostaParceiro.response as ResponseType;
-
-  const fullMatch =
-    respostaAtual === "topo" && respostaDoParceiro === "topo";
-
-  const partialMatch =
-    (respostaAtual === "topo" && respostaDoParceiro === "talvez") ||
-    (respostaAtual === "talvez" && respostaDoParceiro === "topo") ||
-    (respostaAtual === "talvez" && respostaDoParceiro === "talvez");
-
-  if (fullMatch || partialMatch) {
-    const productsRes = await fetch(`/api/recommendations?ideaId=${idea.id}`);
-const productsJson = await productsRes.json();
-
-setMatchModal({
-  ideaId: idea.id,
-  title: idea.title,
-  description: idea.description,
-  matchType: fullMatch ? "full" : "partial",
-  products: productsJson.recommendations || [],
-});
-
-    return true;
-  }
-
-  return false;
-}
-
-async function registrarCliqueProduto(productId: string) {
-  const coupleId = localStorage.getItem("saiadarotina_couple_id");
-
-  await fetch("/api/recommendation-clicks", {
-    method: "POST",
-    body: JSON.stringify({
-      ideaId: matchModal?.ideaId,
-      productId,
-      coupleId,
-    }),
-  });
-}
-
   function avancar() {
     if (index + 1 < ideas.length) {
       setIndex(index + 1);
     } else {
       setFinished(true);
     }
+  }
+
+  async function verificarMatchInstantaneo(
+    idea: Idea,
+    respostaAtual: ResponseType
+  ) {
+    if (respostaAtual === "nao") return false;
+
+    const coupleId = localStorage.getItem("saiadarotina_couple_id");
+    const userId = localStorage.getItem("saiadarotina_user_id");
+
+    if (!coupleId || !userId) return false;
+
+    const { data: users } = await supabase
+      .from("users")
+      .select("id")
+      .eq("couple_id", coupleId);
+
+    if (!users || users.length < 2) return false;
+
+    const outrosUsuarios = users.filter((user) => user.id !== userId);
+
+    const { data: partnerResponses } = await supabase
+      .from("responses")
+      .select("*")
+      .eq("idea_id", idea.id)
+      .in(
+        "user_id",
+        outrosUsuarios.map((user) => user.id)
+      )
+      .order("created_at", { ascending: false });
+
+    if (!partnerResponses || partnerResponses.length === 0) return false;
+
+    const respostaParceiro = partnerResponses.find(
+      (item) => item.response === "topo" || item.response === "talvez"
+    );
+
+    if (!respostaParceiro) return false;
+
+    const respostaDoParceiro = respostaParceiro.response as ResponseType;
+
+    const fullMatch =
+      respostaAtual === "topo" && respostaDoParceiro === "topo";
+
+    const partialMatch =
+      (respostaAtual === "topo" && respostaDoParceiro === "talvez") ||
+      (respostaAtual === "talvez" && respostaDoParceiro === "topo") ||
+      (respostaAtual === "talvez" && respostaDoParceiro === "talvez");
+
+    if (fullMatch || partialMatch) {
+      await trackEvent({
+        eventName: "match_created",
+        ideaId: idea.id,
+        metadata: {
+          title: idea.title,
+          matchType: fullMatch ? "full" : "partial",
+        },
+      });
+
+      const productsRes = await fetch(`/api/recommendations?ideaId=${idea.id}`);
+      const productsJson = await productsRes.json();
+
+      setMatchModal({
+        ideaId: idea.id,
+        title: idea.title,
+        description: idea.description,
+        matchType: fullMatch ? "full" : "partial",
+        products: productsJson.recommendations || [],
+      });
+
+      return true;
+    }
+
+    return false;
+  }
+
+  async function registrarCliqueProduto(productId: string) {
+    const coupleId = localStorage.getItem("saiadarotina_couple_id");
+
+    await fetch("/api/recommendation-clicks", {
+      method: "POST",
+      body: JSON.stringify({
+        ideaId: matchModal?.ideaId,
+        productId,
+        coupleId,
+      }),
+    });
+
+    await trackEvent({
+      eventName: "product_click",
+      ideaId: matchModal?.ideaId,
+      productId,
+    });
   }
 
   async function responder(resposta: ResponseType) {
@@ -178,20 +194,22 @@ async function registrarCliqueProduto(productId: string) {
       return;
     }
 
-    await verificarMatchInstantaneo(currentIdea, resposta);
+    await trackEvent({
+      eventName: "experience_response",
+      ideaId: currentIdea.id,
+      metadata: {
+        response: resposta,
+        title: currentIdea.title,
+      },
+    });
+
+    const teveMatch = await verificarMatchInstantaneo(currentIdea, resposta);
 
     setSaving(false);
 
-    if (!matchModal) {
-  avancar();
-}
-const teveMatch = await verificarMatchInstantaneo(currentIdea, resposta);
-
-setSaving(false);
-
-if (!teveMatch) {
-  avancar();
-}
+    if (!teveMatch) {
+      avancar();
+    }
   }
 
   function continuarExplorando() {
@@ -217,7 +235,7 @@ if (!teveMatch) {
         <p className="text-sm text-pink-300">Explorar</p>
         <h1 className="mt-2 text-3xl font-bold">Ideias para vocês</h1>
         <p className="mt-2 text-white/60">
-          Responda com sinceridade. O app mostra apenas o que combinar com os dois.
+          Responda sem medo! O app mostra apenas o que combinar com os dois.
         </p>
 
         {!finished && currentIdea ? (
@@ -323,53 +341,54 @@ if (!teveMatch) {
             )}
 
             {matchModal.products.length > 0 && (
-  <div className="mt-5 text-left">
-    <p className="mb-3 text-sm font-semibold text-white/70">
-      Produtos que combinam com essa experiência:
-    </p>
+              <div className="mt-5 text-left">
+                <p className="mb-3 text-sm font-semibold text-white/70">
+                  Produtos que combinam com essa experiência:
+                </p>
 
-    <div className="space-y-3">
-      {matchModal.products.map((product) => (
-        <a
-        key={product.id}
-        href={product.product_url || "#"}
-         target="_blank"
-         onClick={() => registrarCliqueProduto(product.id)}
-        >
-          <div className="h-16 w-16 overflow-hidden rounded-xl bg-white/10">
-            {product.image_url ? (
-              <img
-                src={product.image_url}
-                alt={product.title}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center text-xs text-white/30">
-                Sem imagem
+                <div className="space-y-3">
+                  {matchModal.products.map((product) => (
+                    <a
+                      key={product.id}
+                      href={product.product_url || "#"}
+                      target="_blank"
+                      onClick={() => registrarCliqueProduto(product.id)}
+                      className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-3"
+                    >
+                      <div className="h-16 w-16 overflow-hidden rounded-xl bg-white/10">
+                        {product.image_url ? (
+                          <img
+                            src={product.image_url}
+                            alt={product.title}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-xs text-white/30">
+                            Sem imagem
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1">
+                        <p className="font-semibold">{product.title}</p>
+                        <p className="mt-1 text-xs text-white/45">
+                          {product.product_type || "Produto recomendado"}
+                        </p>
+
+                        <p className="mt-1 text-sm font-bold text-pink-200">
+                          {product.price
+                            ? product.price.toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                              })
+                            : "Ver preço na loja"}
+                        </p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
-          </div>
-
-          <div className="flex-1">
-            <p className="font-semibold">{product.title}</p>
-            <p className="mt-1 text-xs text-white/45">
-              {product.product_type || "Produto recomendado"}
-            </p>
-
-            <p className="mt-1 text-sm font-bold text-pink-200">
-              {product.price
-                ? product.price.toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })
-                : "Ver preço na loja"}
-            </p>
-          </div>
-        </a>
-      ))}
-    </div>
-  </div>
-)}
 
             <div className="mt-6 space-y-3">
               <Link
