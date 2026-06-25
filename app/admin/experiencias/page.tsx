@@ -1,6 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+type Tag = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+type TagRelation = {
+  tag_id: string;
+  tags: Tag;
+};
 
 type Idea = {
   id: string;
@@ -9,12 +20,12 @@ type Idea = {
   category: string | null;
   level: string | null;
   active: boolean | null;
-  tags: string[] | null;
   estimated_time: string | null;
   environment: string | null;
   objective: string | null;
   instructions: string | null;
   image_url: string | null;
+  tagRelations?: TagRelation[];
 };
 
 const emptyForm = {
@@ -23,43 +34,62 @@ const emptyForm = {
   category: "Romance",
   level: "romantico",
   active: true,
-  tags: "",
   estimated_time: "",
   environment: "",
   objective: "",
   instructions: "",
   image_url: "",
+  tagIds: [] as string[],
 };
 
 export default function AdminExperienciasPage() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
+  const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
-    carregarIdeias();
+    carregarDados();
   }, []);
 
-  async function carregarIdeias() {
-    const res = await fetch("/api/admin/ideas", { cache: "no-store" });
-    const json = await res.json();
+  async function carregarDados() {
+    setLoading(true);
 
-    setIdeas(json.ideas || []);
+    const [ideasRes, tagsRes] = await Promise.all([
+      fetch("/api/admin/ideas", { cache: "no-store" }),
+      fetch("/api/admin/tags", { cache: "no-store" }),
+    ]);
+
+    const ideasJson = await ideasRes.json();
+    const tagsJson = await tagsRes.json();
+
+    setIdeas(ideasJson.ideas || []);
+    setTags(tagsJson.tags || []);
     setLoading(false);
   }
 
-  function updateForm(field: string, value: string | boolean) {
+  const filteredIdeas = useMemo(() => {
+    return ideas.filter((idea) =>
+      idea.title.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [ideas, search]);
+
+  function updateForm(field: string, value: string | boolean | string[]) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function parseTags(tags: string) {
-    return tags
-      .split(",")
-      .map((tag) => tag.trim().toLowerCase())
-      .filter(Boolean);
+  function toggleTag(tagId: string) {
+    const selected = form.tagIds.includes(tagId);
+
+    updateForm(
+      "tagIds",
+      selected
+        ? form.tagIds.filter((id) => id !== tagId)
+        : [...form.tagIds, tagId]
+    );
   }
 
   async function salvarExperiencia() {
@@ -67,17 +97,12 @@ export default function AdminExperienciasPage() {
 
     setSaving(true);
 
-    const payload = {
-      ...form,
-      tags: parseTags(form.tags),
-    };
-
     const url = editingId ? `/api/admin/ideas/${editingId}` : "/api/admin/ideas";
     const method = editingId ? "PUT" : "POST";
 
     const res = await fetch(url, {
       method,
-      body: JSON.stringify(payload),
+      body: JSON.stringify(form),
     });
 
     if (!res.ok) {
@@ -89,7 +114,7 @@ export default function AdminExperienciasPage() {
     setForm(emptyForm);
     setEditingId(null);
     setSaving(false);
-    carregarIdeias();
+    carregarDados();
   }
 
   function editar(idea: Idea) {
@@ -101,18 +126,17 @@ export default function AdminExperienciasPage() {
       category: idea.category || "Romance",
       level: idea.level || "romantico",
       active: idea.active ?? true,
-      tags: idea.tags?.join(", ") || "",
       estimated_time: idea.estimated_time || "",
       environment: idea.environment || "",
       objective: idea.objective || "",
       instructions: idea.instructions || "",
       image_url: idea.image_url || "",
+      tagIds: idea.tagRelations?.map((relation) => relation.tag_id) || [],
     });
   }
 
   async function excluir(id: string) {
-    const confirmar = confirm("Deseja excluir esta experiência?");
-    if (!confirmar) return;
+    if (!confirm("Deseja excluir esta experiência?")) return;
 
     const res = await fetch(`/api/admin/ideas/${id}`, {
       method: "DELETE",
@@ -123,15 +147,18 @@ export default function AdminExperienciasPage() {
       return;
     }
 
-    carregarIdeias();
+    carregarDados();
   }
 
   async function alternarStatus(idea: Idea) {
+    const tagIds = idea.tagRelations?.map((relation) => relation.tag_id) || [];
+
     const res = await fetch(`/api/admin/ideas/${idea.id}`, {
       method: "PUT",
       body: JSON.stringify({
         ...idea,
         active: !idea.active,
+        tagIds,
       }),
     });
 
@@ -140,10 +167,12 @@ export default function AdminExperienciasPage() {
       return;
     }
 
-    carregarIdeias();
+    carregarDados();
   }
 
   async function duplicar(idea: Idea) {
+    const tagIds = idea.tagRelations?.map((relation) => relation.tag_id) || [];
+
     const res = await fetch("/api/admin/ideas", {
       method: "POST",
       body: JSON.stringify({
@@ -152,12 +181,12 @@ export default function AdminExperienciasPage() {
         category: idea.category,
         level: idea.level,
         active: true,
-        tags: idea.tags || [],
         estimated_time: idea.estimated_time,
         environment: idea.environment,
         objective: idea.objective,
         instructions: idea.instructions,
         image_url: idea.image_url,
+        tagIds,
       }),
     });
 
@@ -166,7 +195,7 @@ export default function AdminExperienciasPage() {
       return;
     }
 
-    carregarIdeias();
+    carregarDados();
   }
 
   function cancelarEdicao() {
@@ -183,10 +212,10 @@ export default function AdminExperienciasPage() {
 
         <h1 className="mt-4 text-4xl font-bold">Experiências</h1>
         <p className="mt-2 text-white/60">
-          Crie, edite e gerencie as experiências exibidas para os casais.
+          Crie, edite e gerencie experiências com tags padronizadas.
         </p>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[420px_1fr]">
+        <div className="mt-8 grid gap-6 lg:grid-cols-[430px_1fr]">
           <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <h2 className="text-2xl font-bold">
               {editingId ? "Editar experiência" : "Nova experiência"}
@@ -204,21 +233,21 @@ export default function AdminExperienciasPage() {
                 value={form.description}
                 onChange={(e) => updateForm("description", e.target.value)}
                 placeholder="Descrição"
-                className="min-h-28 w-full rounded-2xl border border-white/10 bg-white/5 p-4 outline-none"
+                className="min-h-24 w-full rounded-2xl border border-white/10 bg-white/5 p-4 outline-none"
               />
 
               <input
                 value={form.objective}
                 onChange={(e) => updateForm("objective", e.target.value)}
-                placeholder="Objetivo da experiência"
+                placeholder="Objetivo"
                 className="w-full rounded-2xl border border-white/10 bg-white/5 p-4 outline-none"
               />
 
               <textarea
                 value={form.instructions}
                 onChange={(e) => updateForm("instructions", e.target.value)}
-                placeholder="Instruções de como colocar em prática"
-                className="min-h-28 w-full rounded-2xl border border-white/10 bg-white/5 p-4 outline-none"
+                placeholder="Instruções"
+                className="min-h-24 w-full rounded-2xl border border-white/10 bg-white/5 p-4 outline-none"
               />
 
               <div className="grid grid-cols-2 gap-3">
@@ -250,24 +279,17 @@ export default function AdminExperienciasPage() {
                 <input
                   value={form.estimated_time}
                   onChange={(e) => updateForm("estimated_time", e.target.value)}
-                  placeholder="Tempo: 30 min"
+                  placeholder="Tempo"
                   className="rounded-2xl border border-white/10 bg-white/5 p-4 outline-none"
                 />
 
                 <input
                   value={form.environment}
                   onChange={(e) => updateForm("environment", e.target.value)}
-                  placeholder="Ambiente: quarto"
+                  placeholder="Ambiente"
                   className="rounded-2xl border border-white/10 bg-white/5 p-4 outline-none"
                 />
               </div>
-
-              <input
-                value={form.tags}
-                onChange={(e) => updateForm("tags", e.target.value)}
-                placeholder="Tags separadas por vírgula"
-                className="w-full rounded-2xl border border-white/10 bg-white/5 p-4 outline-none"
-              />
 
               <input
                 value={form.image_url}
@@ -275,6 +297,32 @@ export default function AdminExperienciasPage() {
                 placeholder="URL da imagem"
                 className="w-full rounded-2xl border border-white/10 bg-white/5 p-4 outline-none"
               />
+
+              <div>
+                <p className="mb-3 text-sm text-white/50">Tags</p>
+
+                <div className="flex max-h-48 flex-wrap gap-2 overflow-y-auto rounded-2xl border border-white/10 bg-white/5 p-3">
+                  {tags.map((tag) => {
+                    const selected = form.tagIds.includes(tag.id);
+
+                    return (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => toggleTag(tag.id)}
+                        className={`rounded-full px-3 py-2 text-sm ${
+                          selected
+                            ? "bg-pink-500 text-white"
+                            : "bg-white/10 text-white/70"
+                        }`}
+                      >
+                        {selected ? "✓ " : ""}
+                        {tag.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               <label className="flex items-center gap-3 text-white/70">
                 <input
@@ -309,13 +357,22 @@ export default function AdminExperienciasPage() {
           </section>
 
           <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-2xl font-bold">Experiências cadastradas</h2>
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <h2 className="text-2xl font-bold">Experiências cadastradas</h2>
+
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar experiência"
+                className="rounded-2xl border border-white/10 bg-white/5 p-3 outline-none"
+              />
+            </div>
 
             {loading ? (
               <p className="mt-5 text-white/60">Carregando...</p>
             ) : (
               <div className="mt-5 overflow-x-auto">
-                <table className="w-full min-w-[850px] border-separate border-spacing-y-3">
+                <table className="w-full min-w-[900px] border-separate border-spacing-y-3">
                   <thead>
                     <tr className="text-left text-sm text-white/45">
                       <th className="px-4">Experiência</th>
@@ -328,7 +385,7 @@ export default function AdminExperienciasPage() {
                   </thead>
 
                   <tbody>
-                    {ideas.map((idea) => (
+                    {filteredIdeas.map((idea) => (
                       <tr key={idea.id} className="bg-white/5">
                         <td className="rounded-l-2xl px-4 py-4">
                           <p className="font-bold">{idea.title}</p>
@@ -347,12 +404,12 @@ export default function AdminExperienciasPage() {
 
                         <td className="px-4 py-4">
                           <div className="flex max-w-xs flex-wrap gap-1">
-                            {idea.tags?.slice(0, 4).map((tag) => (
+                            {idea.tagRelations?.map((relation) => (
                               <span
-                                key={tag}
+                                key={relation.tag_id}
                                 className="rounded-full bg-pink-500/15 px-2 py-1 text-xs text-pink-200"
                               >
-                                {tag}
+                                {relation.tags.name}
                               </span>
                             ))}
                           </div>

@@ -9,18 +9,16 @@ export async function PUT(
   const body = await request.json();
 
   const { data, error } = await supabaseServer
-    .from("ideas")
+    .from("products")
     .update({
       title: body.title,
       description: body.description,
-      category: body.category,
-      level: body.level,
-      active: body.active,
-      estimated_time: body.estimated_time,
-      environment: body.environment,
-      objective: body.objective,
-      instructions: body.instructions,
+      product_url: body.product_url,
       image_url: body.image_url,
+      price: body.price || null,
+      available: body.available,
+      product_type: body.product_type,
+      vendor: body.vendor,
     })
     .eq("id", id)
     .select()
@@ -29,25 +27,28 @@ export async function PUT(
   if (error) {
     console.error(error);
     return NextResponse.json(
-      { error: "Erro ao atualizar experiência." },
+      { error: "Erro ao atualizar produto." },
       { status: 500 }
     );
   }
 
   if (Array.isArray(body.tagIds)) {
-    await supabaseServer.from("idea_tags_relations").delete().eq("idea_id", id);
+    await supabaseServer
+      .from("product_tags_relations")
+      .delete()
+      .eq("product_id", id);
 
     if (body.tagIds.length > 0) {
-      await supabaseServer.from("idea_tags_relations").insert(
+      await supabaseServer.from("product_tags_relations").insert(
         body.tagIds.map((tagId: string) => ({
-          idea_id: id,
+          product_id: id,
           tag_id: tagId,
         }))
       );
     }
   }
 
-  return NextResponse.json({ idea: data });
+  return NextResponse.json({ product: data });
 }
 
 export async function DELETE(
@@ -56,12 +57,15 @@ export async function DELETE(
 ) {
   const { id } = await params;
 
-  const { error } = await supabaseServer.from("ideas").delete().eq("id", id);
+  const { error } = await supabaseServer
+    .from("products")
+    .delete()
+    .eq("id", id);
 
   if (error) {
     console.error(error);
     return NextResponse.json(
-      { error: "Erro ao excluir experiência." },
+      { error: "Erro ao excluir produto." },
       { status: 500 }
     );
   }
