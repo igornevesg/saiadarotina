@@ -16,10 +16,22 @@ type Idea = {
 
 type ResponseType = "topo" | "talvez" | "nao";
 
+type RecommendedProduct = {
+  id: string;
+  title: string;
+  image_url: string | null;
+  product_url: string | null;
+  price: number | null;
+  product_type: string | null;
+  score: number;
+};
+
 type MatchModal = {
+  ideaId: string;
   title: string;
   description: string | null;
   matchType: "full" | "partial";
+  products: RecommendedProduct[];
 };
 
 export default function ExplorarPage() {
@@ -103,16 +115,34 @@ export default function ExplorarPage() {
     (respostaAtual === "talvez" && respostaDoParceiro === "talvez");
 
   if (fullMatch || partialMatch) {
-    setMatchModal({
-      title: idea.title,
-      description: idea.description,
-      matchType: fullMatch ? "full" : "partial",
-    });
+    const productsRes = await fetch(`/api/recommendations?ideaId=${idea.id}`);
+const productsJson = await productsRes.json();
+
+setMatchModal({
+  ideaId: idea.id,
+  title: idea.title,
+  description: idea.description,
+  matchType: fullMatch ? "full" : "partial",
+  products: productsJson.recommendations || [],
+});
 
     return true;
   }
 
   return false;
+}
+
+async function registrarCliqueProduto(productId: string) {
+  const coupleId = localStorage.getItem("saiadarotina_couple_id");
+
+  await fetch("/api/recommendation-clicks", {
+    method: "POST",
+    body: JSON.stringify({
+      ideaId: matchModal?.ideaId,
+      productId,
+      coupleId,
+    }),
+  });
 }
 
   function avancar() {
@@ -291,6 +321,55 @@ if (!teveMatch) {
                 {matchModal.description}
               </p>
             )}
+
+            {matchModal.products.length > 0 && (
+  <div className="mt-5 text-left">
+    <p className="mb-3 text-sm font-semibold text-white/70">
+      Produtos que combinam com essa experiência:
+    </p>
+
+    <div className="space-y-3">
+      {matchModal.products.map((product) => (
+        <a
+        key={product.id}
+        href={product.product_url || "#"}
+         target="_blank"
+         onClick={() => registrarCliqueProduto(product.id)}
+        >
+          <div className="h-16 w-16 overflow-hidden rounded-xl bg-white/10">
+            {product.image_url ? (
+              <img
+                src={product.image_url}
+                alt={product.title}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-xs text-white/30">
+                Sem imagem
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1">
+            <p className="font-semibold">{product.title}</p>
+            <p className="mt-1 text-xs text-white/45">
+              {product.product_type || "Produto recomendado"}
+            </p>
+
+            <p className="mt-1 text-sm font-bold text-pink-200">
+              {product.price
+                ? product.price.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })
+                : "Ver preço na loja"}
+            </p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+)}
 
             <div className="mt-6 space-y-3">
               <Link

@@ -12,7 +12,19 @@ type DashboardData = {
     id: string;
     title: string;
     total: number;
+    
   }[];
+  productClicks: number;
+
+mostClickedProducts: {
+
+  id: string;
+
+  title: string;
+
+  total: number;
+
+}[];
 };
 
 export default function AdminPage() {
@@ -60,6 +72,7 @@ export default function AdminPage() {
                 value={data?.positiveResponses ?? 0}
               />
               <MetricCard title="Experiências" value={data?.ideas ?? 0} />
+              <MetricCard title="Cliques" value={data?.productClicks ?? 0} />
             </div>
 
             <div className="mt-8 grid gap-4 md:grid-cols-2">
@@ -114,6 +127,33 @@ export default function AdminPage() {
                 </div>
               </section>
             </div>
+            <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+  <h2 className="text-2xl font-bold">Produtos mais clicados</h2>
+
+  <div className="mt-5 space-y-3">
+    {data?.mostClickedProducts?.length ? (
+      data.mostClickedProducts.map((product, index) => (
+        <div
+          key={product.id}
+          className="flex items-center justify-between rounded-2xl bg-white/5 p-4"
+        >
+          <div>
+            <p className="font-semibold">
+              {index + 1}. {product.title}
+            </p>
+            <p className="text-sm text-white/45">
+              {product.total} cliques
+            </p>
+          </div>
+        </div>
+      ))
+    ) : (
+      <p className="text-white/60">
+        Nenhum clique em produto registrado ainda.
+      </p>
+    )}
+  </div>
+</section>
           </>
         )}
       </div>
