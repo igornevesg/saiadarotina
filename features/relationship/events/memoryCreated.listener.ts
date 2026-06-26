@@ -1,8 +1,9 @@
 import { createMemory } from "@/features/relationship/infrastructure/repositories/memoryRepository";
+import { createTimelineEvent } from "@/features/relationship/infrastructure/repositories/timelineRepository";
 import type { MemoryCreatedPayload } from "@/features/platform/events/domainEvents";
 
 export async function onMemoryCreated(payload: MemoryCreatedPayload) {
-  return createMemory({
+  const memory = await createMemory({
     coupleId: payload.coupleId,
     userId: payload.userId || null,
     ideaId: payload.ideaId || null,
@@ -14,4 +15,22 @@ export async function onMemoryCreated(payload: MemoryCreatedPayload) {
       source: "living_book",
     },
   });
+
+  await createTimelineEvent({
+    coupleId: payload.coupleId,
+    userId: payload.userId || null,
+    ideaId: payload.ideaId || null,
+    eventType: "memory_created",
+    title: payload.title,
+    description:
+      payload.content || "Uma nova memória foi adicionada à história de vocês.",
+    visibility: "couple",
+    metadata: {
+      memoryId: memory.id,
+      mood: payload.mood || null,
+      rating: payload.rating || null,
+    },
+  });
+
+  return memory;
 }

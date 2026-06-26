@@ -61,28 +61,67 @@ function formatRelativeDate(date: string) {
 export default function HistoriaPage() {
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creatingMemory, setCreatingMemory] = useState(false);
+
+  async function carregarTimeline() {
+    const coupleId = localStorage.getItem("saiadarotina_couple_id");
+
+    if (!coupleId) {
+      setLoading(false);
+      return;
+    }
+
+    const res = await fetch(`/api/relationship/timeline?coupleId=${coupleId}`, {
+      cache: "no-store",
+    });
+
+    const json = await res.json();
+
+    setTimeline(json.timeline || []);
+    setLoading(false);
+  }
 
   useEffect(() => {
-    async function carregarTimeline() {
+    carregarTimeline();
+  }, []);
+
+  async function criarMemoriaTeste() {
+    try {
+      setCreatingMemory(true);
+
       const coupleId = localStorage.getItem("saiadarotina_couple_id");
+      const userId = localStorage.getItem("saiadarotina_user_id");
 
       if (!coupleId) {
-        setLoading(false);
+        alert("Casal não encontrado.");
         return;
       }
 
-      const res = await fetch(`/api/relationship/timeline?coupleId=${coupleId}`, {
-        cache: "no-store",
+      const res = await fetch("/api/relationship/memories", {
+        method: "POST",
+        body: JSON.stringify({
+          coupleId,
+          userId,
+          title: "Nossa primeira memória",
+          content:
+            "Este é o primeiro registro manual da história de vocês no Saia da Rotina.",
+          mood: "especial",
+          rating: 5,
+        }),
       });
 
       const json = await res.json();
 
-      setTimeline(json.timeline || []);
-      setLoading(false);
-    }
+      if (!res.ok) {
+        alert(json.error || "Erro ao criar memória.");
+        return;
+      }
 
-    carregarTimeline();
-  }, []);
+      await carregarTimeline();
+    } finally {
+      setCreatingMemory(false);
+    }
+  }
 
   const stats = useMemo(() => {
     return {
@@ -108,6 +147,14 @@ export default function HistoriaPage() {
           totalMemories={stats.totalMemories}
           totalExperiences={stats.totalExperiences}
         />
+
+        <button
+          onClick={criarMemoriaTeste}
+          disabled={creatingMemory}
+          className="mt-5 w-full rounded-2xl bg-pink-500 px-5 py-4 font-semibold text-white disabled:opacity-60"
+        >
+          {creatingMemory ? "Criando memória..." : "Criar memória teste"}
+        </button>
 
         {loading ? (
           <p className="mt-8 text-white/60">{TimelineTexts.loading}</p>

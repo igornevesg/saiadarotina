@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { executeCreateMemory } from "@/features/relationship/application/use-cases/createMemory";
-import { logger } from "@/infrastructure/logging/logger";
 import { audit } from "@/infrastructure/security/audit/audit";
 import { rateLimit } from "@/infrastructure/security/rate-limit/rateLimiter";
 import { requireUuid } from "@/infrastructure/security/validation/validation";
+import { handleApiError } from "@/shared/errors/handleApiError";
+import { RateLimitError, ValidationError } from "@/shared/errors/AppError";
 
 export async function POST(request: Request) {
   try {
@@ -14,19 +15,13 @@ export async function POST(request: Request) {
     const ideaId = body.ideaId ? requireUuid(body.ideaId, "ideaId") : null;
 
     if (!body.title || typeof body.title !== "string") {
-      return NextResponse.json(
-        { error: "Título da memória é obrigatório." },
-        { status: 400 }
-      );
+      throw new ValidationError("Título da memória é obrigatório.");
     }
 
     const rate = rateLimit(`memory:${coupleId}`, 20, 60_000);
 
     if (!rate.allowed) {
-      return NextResponse.json(
-        { error: "Muitas requisições. Tente novamente em instantes." },
-        { status: 429 }
-      );
+      throw new RateLimitError();
     }
 
     await executeCreateMemory({
@@ -52,15 +47,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch (error: any) {
-    logger.error("Erro ao criar memória", {
-      message: error?.message,
-      code: error?.code,
-    });
-
-    return NextResponse.json(
-      { error: error?.message || "Erro ao criar memória." },
-      { status: error?.statusCode || 500 }
-    );
+  } catch (error) {
+    return handleApiError(error, "Erro ao criar memória.");
   }
 }

@@ -33,9 +33,9 @@ export async function GET(request: Request) {
       resource: "relationship_timeline_events",
     });
 
-    const timeline = await executeGetTimeline({ coupleId });
+   const result = await executeGetTimeline({ coupleId });
 
-    return NextResponse.json({ timeline });
+return NextResponse.json(result);
   } catch (error) {
     return handleApiError(error, "Erro ao buscar timeline.");
   }
