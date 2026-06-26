@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { getTimelineByCouple } from "@/features/relationship/repositories/relationshipRepository";
 import { logger } from "@/infrastructure/logging/logger";
-import { audit } from "@/infrastructure/security/audit";
-import { getTemporaryAuthContext } from "@/infrastructure/security/auth";
-import { ensureSameCouple } from "@/infrastructure/security/authorization";
-import { rateLimit } from "@/infrastructure/security/rateLimiter";
-import { requireUuid } from "@/infrastructure/security/validation";
+import { audit } from "@/infrastructure/security/audit/audit";
+import { getTemporaryAuthContext } from "@/infrastructure/security/authentication/auth";
+import { ensureSameCouple } from "@/infrastructure/security/authorization/authorization";
+import { rateLimit } from "@/infrastructure/security/rate-limit/rateLimiter";
+import { requireUuid } from "@/infrastructure/security/validation/validation";
 
 export async function GET(request: Request) {
   try {
