@@ -11,6 +11,16 @@ export const DomainEvents = {
 export type DomainEventType =
   (typeof DomainEvents)[keyof typeof DomainEvents];
 
+  export type MemoryCreatedPayload = {
+  coupleId: string;
+  userId?: string | null;
+  ideaId?: string | null;
+  title: string;
+  content?: string | null;
+  rating?: number | null;
+  mood?: string | null;
+};
+
 export type MatchCreatedPayload = {
   coupleId: string;
   userId?: string | null;

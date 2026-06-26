@@ -1,4 +1,4 @@
-import { createTimelineEvent } from "../repositories/relationshipRepository";
+import { createTimelineEvent } from "@/features/relationship/repositories/relationshipRepository";
 import type { MatchCreatedPayload } from "@/features/platform/events/domainEvents";
 
 export async function onMatchCreated(payload: MatchCreatedPayload) {
