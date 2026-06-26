@@ -1,3 +1,5 @@
+import { ValidationError } from "@/shared/errors/AppError";
+
 export function isUuid(value: unknown): value is string {
   if (typeof value !== "string") return false;
 
@@ -8,7 +10,7 @@ export function isUuid(value: unknown): value is string {
 
 export function requireUuid(value: unknown, fieldName: string): string {
   if (!isUuid(value)) {
-    throw new Error(`${fieldName} inválido.`);
+    throw new ValidationError(`${fieldName} inválido.`);
   }
 
   return value;
