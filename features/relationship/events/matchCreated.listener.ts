@@ -5,7 +5,7 @@ export async function onMatchCreated(payload: MatchCreatedPayload) {
   return createTimelineEvent({
     coupleId: payload.coupleId,
     userId: payload.userId || null,
-    ideaId: payload.ideaId,
+    ideaId: payload.ideaId || null,
     eventType: "match_created",
     title: payload.title,
     description:

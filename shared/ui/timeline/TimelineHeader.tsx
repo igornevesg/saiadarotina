@@ -27,8 +27,7 @@ export function TimelineHeader({ totalEvents }: TimelineHeaderProps) {
         </h2>
 
         <p className="mt-3 text-sm leading-relaxed text-white/60">
-          Cada match, experiência e memória ajuda a escrever uma nova página da
-          história de vocês.
+          Cada match, experiência e memória ajuda a escrever uma nova página desta linda história.
         </p>
 
         <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
@@ -41,7 +40,7 @@ export function TimelineHeader({ totalEvents }: TimelineHeaderProps) {
         </div>
 
         <p className="mt-2 text-xs text-white/40">
-          Jornada em construção — não é uma nota, é uma história.
+          Jornada em construção — uma linda história de descobertas.
         </p>
       </div>
     </header>

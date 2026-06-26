@@ -62,7 +62,11 @@ export function protectedGetRoute<T>(
         coupleId,
       });
 
-      return NextResponse.json(result);
+      return NextResponse.json(result, {
+  headers: {
+    "Content-Type": "application/json; charset=utf-8",
+  },
+});
     } catch (error) {
       return handleApiError(error, "Erro ao processar requisição.");
     }

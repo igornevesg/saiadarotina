@@ -68,11 +68,16 @@ export function buildChapterFromEvents(
     label: getLabel(event.type),
   }));
 
+  const narrative = createDefaultNarrative({ events });
+
   return {
     id: `${date}-${index}`,
     title: `Capítulo ${toRoman(index + 1)}`,
     subtitle: "Um novo momento da história de vocês",
-    narrative: createDefaultNarrative({ events }),
+    quote: narrative.quote,
+    narrative: narrative.narrative,
+    reflection: narrative.reflection,
+    mood: narrative.mood,
     date,
     events: chapterEvents,
   };

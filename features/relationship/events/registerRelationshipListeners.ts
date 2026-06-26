@@ -2,9 +2,9 @@ import { eventDispatcher } from "@/infrastructure/eventBus/eventDispatcher";
 import {
   DomainEvents,
   type MatchCreatedPayload,
+  type MemoryCreatedPayload,
 } from "@/features/platform/events/domainEvents";
 import { onMatchCreated } from "./matchCreated.listener";
-import type { MemoryCreatedPayload } from "@/features/platform/events/domainEvents";
 import { onMemoryCreated } from "./memoryCreated.listener";
 
 let registered = false;
@@ -17,8 +17,8 @@ export function registerRelationshipListeners() {
   });
 
   eventDispatcher.subscribe(DomainEvents.MemoryCreated, async (event) => {
-  await onMemoryCreated(event.payload as MemoryCreatedPayload);
-});
+    await onMemoryCreated(event.payload as MemoryCreatedPayload);
+  });
 
   registered = true;
 }

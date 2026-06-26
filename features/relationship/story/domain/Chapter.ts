@@ -1,3 +1,5 @@
+import type { NarrativeMood } from "./Narrative";
+
 export type StoryEvent = {
   id: string;
   type: string;
@@ -10,7 +12,10 @@ export type StoryChapter = {
   id: string;
   title: string;
   subtitle: string;
+  quote: string;
   narrative: string;
+  reflection: string;
+  mood: NarrativeMood;
   date: string;
   events: StoryChapterEvent[];
 };
