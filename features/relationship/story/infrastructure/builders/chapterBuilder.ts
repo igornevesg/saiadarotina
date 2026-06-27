@@ -1,9 +1,10 @@
+import { analyzeStoryEvents } from "@/features/relationship/story/application/analyzers/storyAnalyzer";
+import { storyServices } from "@/features/relationship/story/application/services/storyServices";
 import type {
   StoryChapter,
   StoryChapterEvent,
   StoryEvent,
-} from "../../domain/Chapter";
-import { createDefaultNarrative } from "../narrators/defaultNarrator";
+} from "@/features/relationship/story/domain/Chapter";
 
 function getIcon(type: string) {
   const icons: Record<string, string> = {
@@ -68,12 +69,13 @@ export function buildChapterFromEvents(
     label: getLabel(event.type),
   }));
 
-  const narrative = createDefaultNarrative({ events });
+  const context = analyzeStoryEvents(events);
+  const narrative = storyServices.narrator.create(events, context);
 
   return {
     id: `${date}-${index}`,
     title: `Capítulo ${toRoman(index + 1)}`,
-    subtitle: "Um novo momento da história de vocês",
+    subtitle: narrative.chapterTitle,
     quote: narrative.quote,
     narrative: narrative.narrative,
     reflection: narrative.reflection,

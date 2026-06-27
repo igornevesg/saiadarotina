@@ -1,33 +1,19 @@
-import type { RelationshipStory } from "../../domain/Story";
-import type { StoryEvent } from "../../domain/Chapter";
-import { buildChapterFromEvents } from "./chapterBuilder";
-
-function getDateKey(date: string) {
-  return new Date(date).toISOString().split("T")[0];
-}
+import type { RelationshipStory } from "@/features/relationship/story/domain/Story";
+import type { StoryEvent } from "@/features/relationship/story/domain/Chapter";
+import { buildChapterFromEvents } from "@/features/relationship/story/infrastructure/builders/chapterBuilder";
+import { groupStoryEvents } from "@/features/relationship/story/application/groupers/storyGrouper";
 
 export function buildStoryFromTimeline(params: {
   coupleId: string;
   events: StoryEvent[];
 }): RelationshipStory {
-  const grouped = params.events.reduce<Record<string, StoryEvent[]>>(
-    (acc, event) => {
-      const key = getDateKey(event.occurredAt);
+  const groups = groupStoryEvents(params.events);
 
-      if (!acc[key]) {
-        acc[key] = [];
-      }
-
-      acc[key].push(event);
-
-      return acc;
-    },
-    {}
-  );
-
-  const chapters = Object.entries(grouped)
-    .sort(([a], [b]) => (a < b ? 1 : -1))
-    .map(([date, events], index) => buildChapterFromEvents(date, events, index));
+  const chapters = groups
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+    .map((group, index) =>
+      buildChapterFromEvents(group.date, group.events, index)
+    );
 
   return {
     coupleId: params.coupleId,

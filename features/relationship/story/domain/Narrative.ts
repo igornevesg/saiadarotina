@@ -6,6 +6,7 @@ export type NarrativeMood =
   | "neutral";
 
 export type NarrativePackage = {
+  chapterTitle: string;
   quote: string;
   narrative: string;
   reflection: string;

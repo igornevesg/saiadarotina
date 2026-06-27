@@ -20,6 +20,7 @@ describe("defaultNarrator", () => {
       ],
     });
 
+    expect(result.chapterTitle).toBe("Uma descoberta para guardar");
     expect(result.quote).toBeTruthy();
     expect(result.narrative).toContain("interesse em comum");
     expect(result.reflection).toBeTruthy();
