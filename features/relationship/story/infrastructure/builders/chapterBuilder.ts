@@ -1,4 +1,4 @@
-import { analyzeStoryEvents } from "@/features/relationship/story/application/analyzers/storyAnalyzer";
+import { buildStoryContext } from "@/features/relationship/story/application/builders/storyContextBuilder";
 import { storyServices } from "@/features/relationship/story/application/services/storyServices";
 import type {
   StoryChapter,
@@ -69,7 +69,7 @@ export function buildChapterFromEvents(
     label: getLabel(event.type),
   }));
 
-  const context = analyzeStoryEvents(events);
+  const context = buildStoryContext(events);
   const narrative = storyServices.narrator.create(events, context);
 
   return {
