@@ -20,7 +20,7 @@ describe("defaultNarrator", () => {
       ],
     });
 
-    expect(result.chapterTitle.length).toBeGreaterThan(5);
+    expect(result.title.length).toBeGreaterThan(5);
     expect(result.quote).toBeTruthy();
     expect(result.narrative.length).toBeGreaterThan(20);
     expect(result.reflection).toBeTruthy();

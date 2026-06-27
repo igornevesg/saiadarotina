@@ -3,7 +3,7 @@ import type { StoryEvent } from "@/features/relationship/story/domain/Chapter";
 
 export function getNeutralNarrative(events: StoryEvent[]): NarrativePackage {
   return {
-    chapterTitle: "Um pequeno momento da jornada",
+    title: "Um pequeno momento da jornada",
     quote: "Nem todo capítulo precisa ser grande para ser importante.",
     narrative:
       events.length > 1

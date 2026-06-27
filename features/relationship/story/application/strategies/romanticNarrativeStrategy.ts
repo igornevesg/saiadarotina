@@ -2,9 +2,9 @@ import type { NarrativeStrategy } from "@/features/relationship/story/applicatio
 import { getRomanticNarrative } from "@/features/relationship/story/application/providers/romanticNarrativeProvider";
 
 export const romanticNarrativeStrategy: NarrativeStrategy = {
-  create(events) {
+  create(events, context) {
     const seed = events.map((event) => event.id).join("-");
 
-    return getRomanticNarrative(seed);
+    return getRomanticNarrative(context, seed);
   },
 };

@@ -11,7 +11,7 @@ export type StoryEvent = {
 export type StoryChapter = {
   id: string;
   title: string;
-  subtitle: string;
+  headline: string;
   quote: string;
   narrative: string;
   reflection: string;

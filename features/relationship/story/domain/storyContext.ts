@@ -1,5 +1,6 @@
 import type { NarrativeMood } from "@/features/relationship/story/domain/Narrative";
 import type { RelationshipIntelligence } from "@/features/relationship/intelligence/domain/relationshipIntelligence";
+import type { ChapterEventProfile } from "@/features/relationship/story/domain/chapterEventProfile";
 
 export type StoryDominantEvent =
   | "match"
@@ -21,4 +22,5 @@ export type StoryContext = {
   hasProductInteraction: boolean;
   suggestedMood: NarrativeMood;
   intelligence: RelationshipIntelligence;
+  eventProfile: ChapterEventProfile;
 };

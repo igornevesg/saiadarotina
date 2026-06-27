@@ -11,7 +11,9 @@ function countByType(events: StoryEvent[]) {
   }, {});
 }
 
-export function analyzeStoryEvents(events: StoryEvent[]): StoryContext {
+export function analyzeStoryEvents(
+  events: StoryEvent[]
+): Omit<StoryContext, "eventProfile"> {
   const counts = countByType(events);
 
   const hasMatch = Boolean(counts.match_created);

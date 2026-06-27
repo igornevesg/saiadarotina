@@ -1,20 +1,14 @@
 export type NarrativeMood =
   | "romantic"
   | "happy"
-  | "adventure"
   | "nostalgic"
+  | "adventure"
   | "neutral";
 
 export type NarrativePackage = {
-  chapterTitle: string;
+  title: string;
   quote: string;
   narrative: string;
   reflection: string;
   mood: NarrativeMood;
-};
-
-export type NarrativeTemplateInput = {
-  title: string;
-  eventType: string;
-  description?: string | null;
 };

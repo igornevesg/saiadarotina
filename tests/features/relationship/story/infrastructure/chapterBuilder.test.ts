@@ -16,7 +16,7 @@ describe("Chapter Builder", () => {
 
       expect(chapter.title).toBe("Capítulo I");
 
-      expect(chapter.subtitle.length).toBeGreaterThan(5);
+      expect(chapter.headline.length).toBeGreaterThan(5);
 
       expect(chapter.narrative.length).toBeGreaterThan(20);
 

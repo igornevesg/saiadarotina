@@ -2,7 +2,7 @@ import type { NarrativePackage } from "@/features/relationship/story/domain/Narr
 
 export function getNostalgicNarrative(): NarrativePackage {
   return {
-    chapterTitle: "Uma memória especial",
+    title: "Uma memória especial",
     quote: "Guardar um momento é uma forma de revivê-lo.",
     narrative:
       "Uma nova memória foi registrada. Esse momento agora faz parte da história de vocês.",

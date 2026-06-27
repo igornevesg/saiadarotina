@@ -75,7 +75,7 @@ export function buildChapterFromEvents(
   return {
     id: `${date}-${index}`,
     title: `Capítulo ${toRoman(index + 1)}`,
-    subtitle: narrative.chapterTitle,
+    headline: narrative.title,
     quote: narrative.quote,
     narrative: narrative.narrative,
     reflection: narrative.reflection,
