@@ -8,6 +8,7 @@ import { TimelineHeader } from "@/shared/ui/timeline/TimelineHeader";
 import { TimelineEmpty } from "@/shared/ui/timeline/TimelineEmpty";
 import { FadeIn } from "@/shared/ui/animations/FadeIn";
 import { StoryChapter } from "@/shared/ui/story/storyChapter";
+import { StoryEpilogue } from "@/shared/ui/story/storyEpilogue";
 
 type StoryChapterType = {
   id: string;
@@ -29,11 +30,18 @@ type StoryChapterType = {
   }[];
 };
 
+type StoryEpilogueType = {
+  title: string;
+  text: string;
+  generatedAt: string;
+};
+
 type RelationshipStory = {
   coupleId: string;
   chapters: StoryChapterType[];
   totalChapters: number;
   generatedAt: string;
+  epilogue?: StoryEpilogueType;
 };
 
 export default function HistoriaPage() {
@@ -131,6 +139,11 @@ export default function HistoriaPage() {
                 <StoryChapter chapter={chapter} />
               </FadeIn>
             ))}
+            {story.epilogue && (
+  <FadeIn delay={story.chapters.length * 90}>
+    <StoryEpilogue epilogue={story.epilogue} />
+  </FadeIn>
+)}
           </div>
         )}
       </div>
