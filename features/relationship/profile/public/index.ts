@@ -1,0 +1,2 @@
+export { buildRelationshipProfile } from "@/features/relationship/profile/application/buildRelationshipProfile";
+export { presentRelationshipProfile } from "@/features/relationship/profile/presentation/presenters/relationshipProfilePresenter";

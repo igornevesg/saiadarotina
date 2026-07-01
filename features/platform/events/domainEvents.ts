@@ -6,6 +6,7 @@ export const DomainEvents = {
   ProductPurchased: "ProductPurchased",
   RelationshipDNAUpdated: "RelationshipDNAUpdated",
   StoryGenerated: "StoryGenerated",
+  RecommendationFeedback: "RecommendationFeedback",
 } as const;
 
 export type DomainEventType =
@@ -27,4 +28,10 @@ export type MatchCreatedPayload = {
   ideaId: string;
   title: string;
   matchType: "full" | "partial";
+};
+
+export type RecommendationFeedbackPayload = {
+  coupleId: string;
+  momentId: string;
+  action: "liked" | "anotherSuggestion";
 };

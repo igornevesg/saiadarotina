@@ -1,0 +1,2 @@
+export type { RelationshipContext } from "@/features/relationship/context/domain/relationshipContext";
+export { buildRelationshipContext } from "@/features/relationship/context/application/builders/relationshipContextBuilder";

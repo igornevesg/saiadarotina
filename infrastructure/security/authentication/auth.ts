@@ -5,16 +5,17 @@ export type AuthContext = {
 };
 
 /**
- * Temporário para MVP.
- * Antes do beta, isso será substituído por Supabase Auth.
+ * MVP guard.
+ *
+ * Este contexto NÃO deve autenticar usando dados enviados pelo próprio usuário,
+ * como query params ou body.
+ *
+ * Antes de publicação/beta, substituir por Supabase Auth real.
  */
-export function getTemporaryAuthContext(input: {
-  userId?: string | null;
-  coupleId?: string | null;
-}): AuthContext {
+export function getTemporaryAuthContext(): AuthContext {
   return {
-    userId: input.userId ?? null,
-    coupleId: input.coupleId ?? null,
-    isAuthenticated: Boolean(input.userId || input.coupleId),
+    userId: null,
+    coupleId: null,
+    isAuthenticated: false,
   };
 }
